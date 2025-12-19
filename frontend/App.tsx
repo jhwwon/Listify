@@ -1,5 +1,5 @@
 
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect } from 'react';
 import { 
   Home, Library, Search as SearchIcon, User as UserIcon, LogOut, 
   Settings, Bell, Plus, Play, Pause, Music as MusicIcon, 
@@ -14,17 +14,15 @@ import PlaylistCard from './components/PlaylistCard';
 import SettingsModal from './components/SettingsModal';
 import CartSidebar from './components/CartSidebar';
 import { GenreDistribution, WeeklyActivity, AudioRadar } from './components/Charts';
+import { Login } from './components/Login';
+import { Register } from './components/Register';
+import { logout as logoutApi, getToken, verifyToken } from './services/authService';
 
-const MOCK_USER_DDL: User = {
-  user_no: 1,
-  role_no: 1,
-  email: 'muzic@listify.com',
-  nickname: '리스트파이 마스터',
-  profile_url: null,
-};
+type AuthView = 'login' | 'register' | null;
 
 function App() {
   const [user, setUser] = useState<User | null>(null);
+  const [authView, setAuthView] = useState<AuthView>('login');
   const [view, setView] = useState<AppView>('home');
   const [spotifyToken, setSpotifyToken] = useState<string | null>(null);
   const [songs, setSongs] = useState<Music[]>([]);
@@ -42,6 +40,30 @@ function App() {
   const [cart, setCart] = useState<Music[]>([]);
   const [isCartOpen, setIsCartOpen] = useState(false);
 
+  // 자동 로그인 체크
+  useEffect(() => {
+    const checkAuth = async () => {
+      const token = getToken();
+      if (token) {
+        const response = await verifyToken(token);
+        if (response.success && response.data) {
+          const nickname = localStorage.getItem('nickname') || 'User';
+          const userNo = parseInt(localStorage.getItem('user_no') || '0');
+          setUser({
+            user_no: userNo,
+            role_no: response.data.role_no,
+            email: '',
+            nickname: nickname,
+            profile_url: null,
+            created_at: new Date().toISOString()
+          });
+          setAuthView(null);
+        }
+      }
+    };
+    checkAuth();
+  }, []);
+
   useEffect(() => {
     const init = async () => {
       try {
@@ -49,7 +71,9 @@ function App() {
         setSpotifyToken(data.access_token);
         const popular = await getPopularTracks(data.access_token);
         setSongs(popular);
-      } catch (e) { console.error(e); }
+      } catch (e) { 
+        console.error(e); 
+      }
     };
     init();
   }, []);
@@ -80,18 +104,30 @@ function App() {
 
   if (!user) {
     return (
-      <div className="min-h-screen bg-black flex items-center justify-center p-4">
-        <div className="bg-zinc-900 p-8 rounded-2xl border border-zinc-800 w-full max-md text-center">
-          <MusicIcon className="w-12 h-12 text-primary mx-auto mb-4" />
-          <h1 className="text-2xl font-bold mb-6">Listify 시작하기</h1>
-          <button 
-            onClick={() => setUser(MOCK_USER_DDL)}
-            className="w-full bg-primary text-black font-bold py-3 rounded-full hover:bg-green-400 transition-all shadow-[0_0_20px_rgba(29,185,84,0.3)]"
-          >
-            데모 계정으로 로그인
-          </button>
-        </div>
-      </div>
+      <>
+        {authView === 'login' && (
+          <Login 
+            onLoginSuccess={(userNo, nickname) => {
+              setUser({
+                user_no: userNo,
+                role_no: 1,
+                email: '',
+                nickname: nickname,
+                profile_url: null,
+                created_at: new Date().toISOString()
+              });
+              setAuthView(null);
+            }}
+            onSwitchToRegister={() => setAuthView('register')}
+          />
+        )}
+        {authView === 'register' && (
+          <Register 
+            onRegisterSuccess={() => setAuthView('login')}
+            onSwitchToLogin={() => setAuthView('login')}
+          />
+        )}
+      </>
     );
   }
 
@@ -145,7 +181,14 @@ function App() {
            <button onClick={() => setIsSettingsOpen(true)} className="w-full flex items-center gap-3 px-4 py-2 text-zinc-500 hover:text-white text-sm transition-colors">
              <Settings className="w-4 h-4" /> 설정
            </button>
-           <button onClick={() => setUser(null)} className="w-full flex items-center gap-3 px-4 py-2 text-zinc-500 hover:text-red-400 text-sm transition-colors">
+           <button 
+             onClick={() => {
+               logoutApi();
+               setUser(null);
+               setAuthView('login');
+             }} 
+             className="w-full flex items-center gap-3 px-4 py-2 text-zinc-500 hover:text-red-400 text-sm transition-colors"
+           >
              <LogOut className="w-4 h-4" /> 로그아웃
            </button>
         </div>
@@ -162,9 +205,9 @@ function App() {
           {view === 'home' && (
             <div className="space-y-8 animate-in fade-in duration-500">
               <div className="bg-gradient-to-br from-primary/30 via-zinc-900 to-black p-10 rounded-3xl border border-white/5 shadow-2xl">
-                <h1 className="text-5xl font-extrabold mb-4 tracking-tight">Welcome to Muze</h1>
+                <h1 className="text-5xl font-extrabold mb-4 tracking-tight">Welcome to Listify</h1>
                 <p className="text-zinc-400 text-lg max-w-lg leading-relaxed">
-                  당신만의 음악 장바구니를 채우고 AI와 함께 완벽한 플레이리스트를 완성하세요.
+                  당신만의 음악 장바구니를 채우고 완벽한 플레이리스트를 만들어보세요.
                 </p>
                 <button 
                   onClick={() => setView('search')}
@@ -391,8 +434,8 @@ function App() {
         <CartSidebar 
           isOpen={isCartOpen} 
           onClose={() => setIsCartOpen(false)} 
-          items={cart.map(c => ({...c, addedAt: Date.now()}))}
-          onRemove={(id) => setCart(cart.filter(c => c.spotify_url !== id))}
+          items={cart}
+          onRemove={(url) => setCart(cart.filter(c => c.spotify_url !== url))}
           onClear={() => setCart([])}
           onSavePlaylist={(title, desc) => {
             const newP: Playlist = {

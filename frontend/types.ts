@@ -17,22 +17,6 @@ export interface Notice {
   updated_at: string;
 }
 
-// Added Song interface to fix export errors in constants.ts and services/geminiService.ts
-export interface Song {
-  id: string;
-  title: string;
-  artist: string;
-  album: string;
-  coverUrl: string;
-  duration: string;
-  genre: string;
-  year: number;
-  mood: string;
-  previewUrl: string | null;
-  spotifyUrl: string;
-  popularity: number;
-}
-
 export interface Music {
   music_no?: number;
   track_name: string;
@@ -54,7 +38,6 @@ export interface Playlist {
   music_items?: Music[];
 }
 
-// Added ListeningStats interface to fix export errors in constants.ts and components/Charts.tsx
 export interface ListeningStats {
   totalMinutes: number;
   topGenres: { name: string; value: number }[];

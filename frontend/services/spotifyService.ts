@@ -53,7 +53,7 @@ export const getPopularTracks = async (token: string): Promise<Music[]> => {
 };
 
 const mapSpotifyToMusic = (track: any): Music => ({
-  music_no: undefined, // Will be set by DB
+  music_no: undefined,
   track_name: track.name,
   artist_name: track.artists.map((a: any) => a.name).join(", "),
   album_name: track.album.name,

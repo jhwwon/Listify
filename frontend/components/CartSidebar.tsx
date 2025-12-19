@@ -1,10 +1,10 @@
 import React, { useState } from 'react';
-import { Trash2, GripVertical, Save, X, ListMusic, Plus } from 'lucide-react';
-import { Song, CartItem } from '../types';
+import { Trash2, GripVertical, Save, X, ListMusic } from 'lucide-react';
+import { Music } from '../types';
 
 interface CartSidebarProps {
-  items: CartItem[];
-  onRemove: (id: string) => void;
+  items: Music[];
+  onRemove: (url: string) => void;
   onClear: () => void;
   isOpen: boolean;
   onClose: () => void;
@@ -53,8 +53,6 @@ const CartSidebar: React.FC<CartSidebarProps> = ({
           </div>
         ) : (
           items.map((item, idx) => (
-            // Fixed property names to match Music interface (CartItem extends Music):
-            // id -> spotify_url, coverUrl -> album_image_url, title -> track_name, artist -> artist_name
             <div key={item.spotify_url + idx} className="group flex items-center bg-zinc-900/50 p-2 rounded-md hover:bg-zinc-800 transition-colors">
               <div className="cursor-grab text-zinc-600 hover:text-zinc-400 mr-2">
                 <GripVertical className="w-4 h-4" />
@@ -103,7 +101,7 @@ const CartSidebar: React.FC<CartSidebarProps> = ({
               <button 
                 onClick={handleSave}
                 disabled={!playlistName.trim()}
-                className="flex-1 py-2 text-sm font-medium bg-primary text-black rounded hover:bg-green-400 disabled:opacity-50"
+                className="flex-1 py-2 text-sm font-bold bg-primary text-black rounded hover:bg-green-400 disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 저장
               </button>
@@ -111,25 +109,20 @@ const CartSidebar: React.FC<CartSidebarProps> = ({
           </div>
         ) : (
           <div className="space-y-2">
-             <div className="flex justify-between text-sm text-zinc-400 mb-2">
-                <span>총 재생 시간</span>
-                <span>{items.length * 3} 분 (예상)</span>
-             </div>
-             <button 
-               onClick={() => setIsSaving(true)}
-               disabled={items.length === 0}
-               className="w-full py-3 bg-white text-black font-bold rounded-full hover:bg-zinc-200 disabled:opacity-50 disabled:hover:bg-white flex items-center justify-center gap-2 transition-colors"
-             >
-               <Save className="w-4 h-4" />
-               플레이리스트 생성
-             </button>
-             <button 
-               onClick={onClear}
-               disabled={items.length === 0}
-               className="w-full py-2 text-xs text-zinc-500 hover:text-red-400 transition-colors"
-             >
-               장바구니 비우기
-             </button>
+            <button 
+              onClick={() => setIsSaving(true)}
+              disabled={items.length === 0}
+              className="w-full flex items-center justify-center gap-2 py-2.5 bg-primary text-black font-bold rounded-lg hover:bg-green-400 disabled:opacity-50 disabled:cursor-not-allowed transition-all"
+            >
+              <Save className="w-4 h-4" /> 플레이리스트로 저장
+            </button>
+            <button 
+              onClick={onClear}
+              disabled={items.length === 0}
+              className="w-full py-2 text-sm text-zinc-500 hover:text-red-400 disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              전체 삭제
+            </button>
           </div>
         )}
       </div>
