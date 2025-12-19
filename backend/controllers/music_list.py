@@ -1,52 +1,22 @@
 # -*- coding: utf-8 -*-
 from flask import request, jsonify
-import os
-from db import connect_to_mysql
-from services import music_list as music_list_svc
-
-
-def _get_user_no_from_header():
-    """헤더의 X-User-No로 사용자 번호 추출"""
-    user_no = request.headers.get('X-User-No')
-    if not user_no:
-        return None, (jsonify({"success": False, "message": "인증 정보가 없습니다 (X-User-No)"}), 401)
-    try:
-        user_no = int(user_no)
-    except ValueError:
-        return None, (jsonify({"success": False, "message": "잘못된 사용자 번호"}), 400)
-    return user_no, None
+from services import music_list as music_list_svc, playlist as playlist_svc
+from middleware.auth_utils import require_auth
 
 
 def _check_playlist_owner(playlist_no: int, user_no: int):
     """플레이리스트 소유자 확인"""
-    conn = connect_to_mysql(
-        host=os.getenv('DB_HOST', 'localhost'),
-        port=int(os.getenv('DB_PORT', 3306)),
-        user=os.getenv('DB_USER', 'root'),
-        password=os.getenv('DB_PASSWORD', '1234'),
-        database=os.getenv('DB_DATABASE', 'listify')
-    )
-    if not conn:
-        return False, "DB 연결 실패"
-    try:
-        with conn.cursor() as cursor:
-            sql = "SELECT user_no FROM playlist WHERE playlist_no = %s"
-            cursor.execute(sql, (playlist_no,))
-            row = cursor.fetchone()
-            if not row:
-                return False, "존재하지 않는 플레이리스트"
-            if row.get('user_no') != user_no:
-                return False, "권한이 없습니다 (본인의 플레이리스트만 수정 가능)"
-            return True, None
-    except Exception as e:
-        return False, str(e)
-    finally:
-        conn.close()
+    playlist, error = playlist_svc.find_playlist_by_no(playlist_no)
+    if error or not playlist:
+        return False, "존재하지 않는 플레이리스트"
+    if playlist.get('user_no') != user_no:
+        return False, "권한이 없습니다 (본인의 플레이리스트만 수정 가능)"
+    return True, None
 
 
-# 플레이리스트에 음악 추가
+# 플레이리스트에 음악 추가 (본인 플레이리스트만 가능)
 def add_music(playlist_no: int):
-    user_no, error_resp = _get_user_no_from_header()
+    user_no, role_no, error_resp = require_auth()
     if error_resp:
         return error_resp
 
@@ -58,7 +28,7 @@ def add_music(playlist_no: int):
 
     data = request.get_json(silent=True) or {}
     music_no = data.get('music_no')
-    
+
     if not music_no:
         return jsonify({"success": False, "message": "music_no 필드가 필요합니다."}), 400
 
@@ -78,9 +48,9 @@ def add_music(playlist_no: int):
         return jsonify({"success": False, "message": str(e)}), 500
 
 
-# 플레이리스트에서 음악 삭제
+# 플레이리스트에서 음악 삭제 (본인 플레이리스트만 가능)
 def remove_music(playlist_no: int, music_no: int):
-    user_no, error_resp = _get_user_no_from_header()
+    user_no, role_no, error_resp = require_auth()
     if error_resp:
         return error_resp
 
@@ -99,9 +69,9 @@ def remove_music(playlist_no: int, music_no: int):
         return jsonify({"success": False, "message": str(e)}), 500
 
 
-# 플레이리스트의 모든 음악 삭제
+# 플레이리스트의 모든 음악 삭제 (본인 플레이리스트만 가능)
 def clear_playlist(playlist_no: int):
-    user_no, error_resp = _get_user_no_from_header()
+    user_no, role_no, error_resp = require_auth()
     if error_resp:
         return error_resp
 

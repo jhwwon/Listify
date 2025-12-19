@@ -1,44 +1,6 @@
 from flask import request, jsonify
-import os
-from db import connect_to_mysql
 from services import playlist as playlist_svc
-
-
-def _get_user_no_from_header():
-    """헤더의 X-User-No로 사용자 번호 추출"""
-    user_no = request.headers.get('X-User-No')
-    if not user_no:
-        return None, (jsonify({"success": False, "message": "인증 정보가 없습니다 (X-User-No)"}), 401)
-    try:
-        user_no = int(user_no)
-    except ValueError:
-        return None, (jsonify({"success": False, "message": "잘못된 사용자 번호"}), 400)
-    return user_no, None
-
-
-def _check_user_exists(user_no: int):
-    """사용자 존재 여부 확인"""
-    conn = connect_to_mysql(
-        host=os.getenv('DB_HOST', 'localhost'),
-        port=int(os.getenv('DB_PORT', 3306)),
-        user=os.getenv('DB_USER', 'root'),
-        password=os.getenv('DB_PASSWORD', '1234'),
-        database=os.getenv('DB_DATABASE', 'listify')
-    )
-    if not conn:
-        return False, "DB 연결 실패"
-    try:
-        with conn.cursor() as cursor:
-            sql = "SELECT user_no FROM user WHERE user_no = %s AND is_deleted = FALSE"
-            cursor.execute(sql, (user_no,))
-            row = cursor.fetchone()
-            if not row:
-                return False, "존재하지 않는 사용자"
-            return True, None
-    except Exception as e:
-        return False, str(e)
-    finally:
-        conn.close()
+from middleware.auth_utils import require_auth
 
 
 def _check_playlist_owner(playlist_no: int, user_no: int):
@@ -51,21 +13,16 @@ def _check_playlist_owner(playlist_no: int, user_no: int):
     return True, None
 
 
-# 플레이리스트 생성
+# 플레이리스트 생성 (인증 필요)
 def create_playlist():
-    user_no, error_resp = _get_user_no_from_header()
+    user_no, role_no, error_resp = require_auth()
     if error_resp:
         return error_resp
-
-    exists, err = _check_user_exists(user_no)
-    if not exists:
-        status = 404 if err == "존재하지 않는 사용자" else 500
-        return jsonify({"success": False, "message": err}), status
 
     data = request.get_json(silent=True) or {}
     title = data.get('title')
     content = data.get('content')
-    
+
     if not title:
         return jsonify({"success": False, "message": "title 필드가 필요합니다."}), 400
 
@@ -86,9 +43,9 @@ def create_playlist():
         return jsonify({"success": False, "message": str(e)}), 500
 
 
-# 플레이리스트 수정
+# 플레이리스트 수정 (본인만 가능)
 def update_playlist(playlist_no: int):
-    user_no, error_resp = _get_user_no_from_header()
+    user_no, role_no, error_resp = require_auth()
     if error_resp:
         return error_resp
 
@@ -101,7 +58,7 @@ def update_playlist(playlist_no: int):
     data = request.get_json(silent=True) or {}
     title = data.get('title')
     content = data.get('content')
-    
+
     if not title:
         return jsonify({"success": False, "message": "title 필드가 필요합니다."}), 400
 
@@ -114,9 +71,9 @@ def update_playlist(playlist_no: int):
         return jsonify({"success": False, "message": str(e)}), 500
 
 
-# 플레이리스트 삭제
+# 플레이리스트 삭제 (본인만 가능)
 def delete_playlist(playlist_no: int):
-    user_no, error_resp = _get_user_no_from_header()
+    user_no, role_no, error_resp = require_auth()
     if error_resp:
         return error_resp
 
