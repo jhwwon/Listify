@@ -1,13 +1,19 @@
 from flask import request, jsonify
 from services import user as user_service
+from middleware.auth_utils import require_self_or_admin
 
 def get_profile(user_no):
-    """프로필 조회"""
+    """프로필 조회 (본인 또는 ADMIN만 가능)"""
+    # JWT 토큰 검증 및 권한 확인
+    _, _, error_resp = require_self_or_admin(user_no)
+    if error_resp:
+        return error_resp
+
     user, error = user_service.get_profile(user_no)
-    
+
     if error:
         return jsonify({"success": False, "message": error}), 404
-    
+
     return jsonify({
         "success": True,
         "data": {
@@ -21,23 +27,33 @@ def get_profile(user_no):
     }), 200
 
 def update_profile(user_no):
-    """프로필 수정 (닉네임)"""
+    """프로필 수정 (본인 또는 ADMIN만 가능)"""
+    # JWT 토큰 검증 및 권한 확인
+    _, _, error_resp = require_self_or_admin(user_no)
+    if error_resp:
+        return error_resp
+
     data = request.get_json()
-    
+
     if not data or "nickname" not in data:
         return jsonify({"success": False, "message": "nickname 필드가 필요합니다."}), 400
-    
+
     success, message = user_service.update_nickname(user_no, data["nickname"])
-    
+
     if success:
         return jsonify({"success": True, "message": message}), 200
     else:
         return jsonify({"success": False, "message": message}), 400
 
 def delete_account(user_no):
-    """계정 탈퇴"""
+    """계정 탈퇴 (본인 또는 ADMIN만 가능)"""
+    # JWT 토큰 검증 및 권한 확인
+    _, _, error_resp = require_self_or_admin(user_no)
+    if error_resp:
+        return error_resp
+
     success, message = user_service.delete_account(user_no)
-    
+
     if success:
         return jsonify({"success": True, "message": message}), 200
     else:
