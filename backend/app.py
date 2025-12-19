@@ -3,6 +3,7 @@ from dotenv import load_dotenv
 import os
 from spotipy.oauth2 import SpotifyClientCredentials
 import spotipy
+from flask_cors import CORS
 
 from routes.auth import auth_bp
 from routes.notice import notice_bp
@@ -12,6 +13,7 @@ from routes.user import user_bp
 load_dotenv()
 
 app = Flask(__name__)
+CORS(app)
 
 
 # Blueprint 등록
