@@ -1,12 +1,12 @@
-
 import React, { useState, useEffect } from 'react';
 import { 
   Home, Library, Search as SearchIcon, User as UserIcon, LogOut, 
   Settings, Bell, Plus, Play, Pause, Music as MusicIcon, 
   Search, Loader2, Heart, Check, Calendar, Clock, Edit3
 } from 'lucide-react';
-import { Music, Playlist, AppView, User, Notice } from './types';
+import { Music, Playlist, AppView, User } from './types';
 import { getAccessToken, getPopularTracks, searchSpotifyTracks } from './services/spotifyService';
+import { login, register, logout as logoutApi, getToken, verifyToken } from './services/authService';
 import { SPOTIFY_CLIENT_ID, SPOTIFY_CLIENT_SECRET, MOCK_NOTICES, MOCK_STATS } from './constants';
 
 import Header from './components/Header';
@@ -16,7 +16,6 @@ import CartSidebar from './components/CartSidebar';
 import { GenreDistribution, WeeklyActivity, AudioRadar } from './components/Charts';
 import { Login } from './components/Login';
 import { Register } from './components/Register';
-import { logout as logoutApi, getToken, verifyToken } from './services/authService';
 
 type AuthView = 'login' | 'register' | null;
 
@@ -102,6 +101,7 @@ function App() {
     }
   };
 
+  // 로그인/회원가입 화면
   if (!user) {
     return (
       <>
