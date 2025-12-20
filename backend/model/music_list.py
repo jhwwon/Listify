@@ -61,7 +61,7 @@ def find_by_playlist_no(playlist_no: int):
     try:
         with conn.cursor() as cursor:
             sql = """
-                SELECT ml.playlist_no, ml.music_no, m.title, m.artist, m.album, m.duration
+                SELECT ml.playlist_no, ml.music_no, m.track_name, m.artist_name, m.album_name, m.duration_ms
                 FROM music_list ml
                 LEFT JOIN music m ON ml.music_no = m.music_no
                 WHERE ml.playlist_no = %s
