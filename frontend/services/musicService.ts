@@ -1,3 +1,4 @@
+// frontend/services/musicService.ts
 import { API_URL } from '../constants';
 import { Music } from '../types';
 import { getToken } from './authService';
@@ -7,6 +8,7 @@ interface ApiResponse<T> {
   message?: string;
   data?: T;
 }
+
 
 // 공통 fetch (JWT 포함)
 const authFetch = async (
@@ -18,6 +20,7 @@ const authFetch = async (
   const headers: Record<string, string> = {
     'Content-Type': 'application/json',
     ...(options.headers as Record<string, string> || {})
+
   };
 
   if (token) {
@@ -77,3 +80,4 @@ export const getTop50Music = async (): Promise<ApiResponse<Music[]>> => {
     return { success: false, message: 'Top 50 조회 실패' };
   }
 };
+

@@ -18,7 +18,7 @@ export interface Notice {
 }
 
 export interface Music {
-  music_no?: number;
+  music_no: number;
   track_name: string;
   artist_name: string;
   album_name: string;
@@ -26,6 +26,13 @@ export interface Music {
   duration_ms: number;
   popularity: number;
   spotify_url: string;
+  preview_url?: string | null;  // 30초 미리듣기 URL
+
+  genre_no?: number;
+  release_date?: string | null;
+  release_year?: number | null;
+  spotify_track_id?: string | null;
+  is_new?: boolean;
 }
 
 export interface Playlist {
@@ -50,4 +57,19 @@ export type AuthState = 'login' | 'signup' | 'forgot-password';
 
 export interface CartItem extends Music {
   addedAt: number;
+}
+
+export interface ApiResponse<T> {
+  success: boolean;
+  message?: string;
+  data?: T;
+}
+
+
+export interface PagedResponse<T> {
+  success: boolean;
+  data: T[];
+  page: number;
+  size: number;
+  total: number;
 }

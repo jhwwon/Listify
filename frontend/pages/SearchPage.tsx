@@ -1,14 +1,19 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Music } from '../types';
-import { Search as SearchIcon, Loader2, Plus, Check } from 'lucide-react';
+import { Search, Loader2, Plus, Check } from 'lucide-react';
+import { searchMusic } from '../services/musicService';
 
-interface SearchPageProps {
+
+interface Props {
   searchQuery: string;
   setSearchQuery: (q: string) => void;
   onSearch: (e: React.FormEvent) => void;
   onSearchByGenre: (genre: string) => void;
+
   isSearching: boolean;
+  setIsSearching: (v: boolean) => void;
   searchResults: Music[];
+  setSearchResults: (m: Music[]) => void;
   cart: Music[];
   onToggleCart: (song: Music) => void;
 }
@@ -20,8 +25,11 @@ export default function SearchPage({
   setSearchQuery,
   onSearch,
   onSearchByGenre,
+
   isSearching,
+  setIsSearching,
   searchResults,
+  setSearchResults,
   cart,
   onToggleCart,
 }: SearchPageProps) {

@@ -1,6 +1,16 @@
 import React from 'react';
 import { AppView } from '../types';
-import { Home, Library, Search as SearchIcon, User as UserIcon, Bell, LogOut, Settings, Plus, Music as MusicIcon } from 'lucide-react';
+import {
+  Home,
+  Library,
+  Search as SearchIcon,
+  User as UserIcon,
+  Bell,
+  LogOut,
+  Settings,
+  Plus,
+  Music as MusicIcon
+} from 'lucide-react';
 
 interface SidebarProps {
   view: AppView;
@@ -28,30 +38,43 @@ export const Sidebar: React.FC<SidebarProps> = ({
   ];
 
   return (
-    <aside className="w-64 bg-zinc-950 border-r border-zinc-800 flex flex-col z-20">
+    <aside className="
+      w-64
+      h-screen
+      sticky top-0
+      shrink-0
+      bg-zinc-950
+      border-r border-zinc-800
+      flex flex-col
+      z-30
+    ">
+      {/* 로고 */}
       <div className="p-6 flex items-center gap-2 text-primary">
         <MusicIcon className="w-8 h-8" />
         <span className="text-xl font-bold tracking-tight">Listify</span>
       </div>
-      
-      <nav className="flex-1 px-4 space-y-1">
+
+      {/* 메뉴 */}
+      <nav className="flex-1 px-4 space-y-1 overflow-y-auto">
         {menuItems.map((item) => (
-          <button 
+          <button
             key={item.id}
             onClick={() => onViewChange(item.id)}
             className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg transition-all ${
-              view === item.id 
-              ? 'bg-zinc-900 text-primary font-bold shadow-inner' 
-              : 'text-zinc-400 hover:text-white hover:bg-zinc-900/50'
+              view === item.id
+                ? 'bg-zinc-900 text-primary font-bold shadow-inner'
+                : 'text-zinc-400 hover:text-white hover:bg-zinc-900/50'
             }`}
           >
-            <item.icon className="w-5 h-5" /> {item.label}
+            <item.icon className="w-5 h-5" />
+            {item.label}
           </button>
         ))}
       </nav>
 
+      {/* 하단 버튼 */}
       <div className="p-4 border-t border-zinc-800 space-y-2">
-        <button 
+        <button
           onClick={onOpenCart}
           className="w-full flex items-center justify-between px-4 py-2 bg-primary/10 text-primary rounded-lg hover:bg-primary/20 transition-colors text-sm border border-primary/20"
         >
@@ -62,14 +85,16 @@ export const Sidebar: React.FC<SidebarProps> = ({
             {cartCount}
           </span>
         </button>
-        <button 
-          onClick={onOpenSettings} 
+
+        <button
+          onClick={onOpenSettings}
           className="w-full flex items-center gap-3 px-4 py-2 text-zinc-500 hover:text-white text-sm transition-colors"
         >
           <Settings className="w-4 h-4" /> 설정
         </button>
-        <button 
-          onClick={onLogout} 
+
+        <button
+          onClick={onLogout}
           className="w-full flex items-center gap-3 px-4 py-2 text-zinc-500 hover:text-red-400 text-sm transition-colors"
         >
           <LogOut className="w-4 h-4" /> 로그아웃

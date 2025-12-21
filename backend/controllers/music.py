@@ -6,14 +6,25 @@ def search_music():
     keyword = request.args.get('q')
     category = request.args.get('category')
 
+    page = int(request.args.get('page', 1))
+    size = int(request.args.get('size', 12))
+
     if not keyword:
         return jsonify({"success": False, "message": "검색어(q)가 필요합니다."}), 400
 
-    musics, error = music_service.search_and_save_music(keyword, category)
+    musics, total, error = music_service.search_and_save_music(
+        keyword, category, page, size
+    )
     if error:
         return jsonify({"success": False, "message": error}), 500
 
-    return jsonify({"success": True, "data": musics}), 200
+    return jsonify({
+        "success": True,
+        "data": musics,
+        "page": page,
+        "size": size,
+        "total": total
+    }), 200
 
 
 def get_music_list():
