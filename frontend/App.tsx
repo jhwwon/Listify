@@ -4,17 +4,13 @@ import {
   Home, Library, Search as SearchIcon, User as UserIcon, LogOut, 
   Settings, Bell, Plus, Play, Pause, Music as MusicIcon, 
   Search, Loader2, Heart, Check, Calendar, Clock, Edit3, Trash2
-
 } from 'lucide-react';
 import { Music, Playlist, AppView, User } from './types';
 import { searchMusic, getAllMusic, getTop50Music } from './services/musicService';
 import { login, register, logout as logoutApi, getToken, verifyToken } from './services/authService';
-
 import { getUserPlaylists, createPlaylist, updatePlaylist, deletePlaylist, addMusicToPlaylist, removeMusicFromPlaylist, getPlaylistMusic } from './services/playlistService';
-import { MOCK_NOTICES, MOCK_STATS } from './constants';
-import { getUserProfile, updateUserProfile, deleteAccount } from './services/userService';
-import { getUserPlaylists } from './services/playlistService';
 import { SPOTIFY_CLIENT_ID, SPOTIFY_CLIENT_SECRET, MOCK_NOTICES, MOCK_STATS } from './constants';
+import { getUserProfile, updateUserProfile, deleteAccount } from './services/userService';
 
 import Header from './components/Header';
 import PlaylistCard from './components/PlaylistCard';
@@ -26,7 +22,7 @@ import CreatePlaylistModal from './components/CreatePlaylistModal';
 import { GenreDistribution, WeeklyActivity, AudioRadar } from './components/Charts';
 import { Login } from './components/Login';
 import { Register } from './components/Register';
-import { NoticesPage } from './pages/NoticesPage'; 
+import { NoticesPage } from './pages/NoticesPage';
 
 type AuthView = 'login' | 'register' | null;
 
@@ -77,7 +73,6 @@ function App() {
             created_at: new Date().toISOString()
           });
           setAuthView(null);
-          // 플레이리스트 목록 불러오기
           fetchPlaylists(userNo);
         }
       }
@@ -86,71 +81,67 @@ function App() {
     checkAuth();
   }, []);
 
-
-// 플레이리스트 목록 조회 함수 (음악 포함)
-const fetchPlaylists = async (userNo: number) => {
-  setIsLoading(true);
-  try {
-    const response = await getUserPlaylists(userNo);
-    if (response.success && response.data) {
-      const playlistsWithMusic = await Promise.all(
-        response.data.map(async (p: Playlist) => {
-          const musicRes = await getPlaylistMusic(p.playlist_no);
-          const musicData = musicRes.data as any;
-
-          return {
-            ...p,
-            music_items:
-              musicRes.success && musicData?.music_list
-                ? musicData.music_list
-                : [],
-          };
-        })
-      );
-      setPlaylists(playlistsWithMusic);
-      setPlaylistCount(playlistsWithMusic.length);
-    }
-  } catch (e) {
-    console.error('플레이리스트 조회 실패:', e);
-  } finally {
-    setIsLoading(false);
-  }
-};
-
-// 프로필 및 플레이리스트 데이터 로드
-useEffect(() => {
-  const loadUserData = async () => {
-    if (!user) return;
-
+  // 플레이리스트 목록 조회 함수 (음악 포함)
+  const fetchPlaylists = async (userNo: number) => {
+    setIsLoading(true);
     try {
-      // 프로필 정보만 여기서 로드
-      const profileResponse = await getUserProfile(user.user_no);
-      if (profileResponse.success) {
-        setUser(prev =>
-          prev
-            ? {
-                ...prev,
-                email: profileResponse.data.email,
-                nickname: profileResponse.data.nickname,
-                profile_url: profileResponse.data.profile_url,
-              }
-            : null
-        );
-      }
+      const response = await getUserPlaylists(userNo);
+      if (response.success && response.data) {
+        const playlistsWithMusic = await Promise.all(
+          response.data.map(async (p: Playlist) => {
+            const musicRes = await getPlaylistMusic(p.playlist_no);
+            const musicData = musicRes.data as any;
 
-      // 플레이리스트는 통합 함수 사용
-      await fetchPlaylists(user.user_no);
-    } catch (error) {
-      console.error('사용자 데이터 로드 실패:', error);
+            return {
+              ...p,
+              music_items:
+                musicRes.success && musicData?.music_list
+                  ? musicData.music_list
+                  : [],
+            };
+          })
+        );
+        setPlaylists(playlistsWithMusic);
+        setPlaylistCount(playlistsWithMusic.length);
+      }
+    } catch (e) {
+      console.error('플레이리스트 조회 실패:', e);
+    } finally {
+      setIsLoading(false);
     }
   };
 
-  loadUserData();
-}, [user?.user_no]);
+  // 프로필 및 플레이리스트 데이터 로드
+  useEffect(() => {
+    const loadUserData = async () => {
+      if (!user) return;
+
+      try {
+        const profileResponse = await getUserProfile(user.user_no);
+        if (profileResponse.success) {
+          setUser(prev =>
+            prev
+              ? {
+                  ...prev,
+                  email: profileResponse.data.email,
+                  nickname: profileResponse.data.nickname,
+                  profile_url: profileResponse.data.profile_url,
+                }
+              : null
+          );
+        }
+        await fetchPlaylists(user.user_no);
+      } catch (error) {
+        console.error('사용자 데이터 로드 실패:', error);
+      }
+    };
+
+    loadUserData();
+  }, [user?.user_no]);
+
   useEffect(() => {
     const init = async () => {
       try {
-        // 백엔드 API로 전체 음악 목록 가져오기
         const response = await getAllMusic();
         if (response.success && response.data) {
           setSongs(response.data);
@@ -162,7 +153,7 @@ useEffect(() => {
     init();
   }, []);
 
-  // 백엔드 API로 음악 검색 (검색 결과는 자동으로 DB에 저장됨)
+  // 백엔드 API로 음악 검색
   const handleSearch = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!searchQuery.trim()) return;
@@ -189,6 +180,82 @@ useEffect(() => {
     }
   };
 
+  // 플레이리스트 클릭 핸들러
+  const handlePlaylistClick = (playlist: Playlist) => {
+    setSelectedPlaylist(playlist);
+    setIsDetailOpen(true);
+  };
+
+  // 플레이리스트 저장 (장바구니에서 새 플레이리스트 생성)
+  // 플레이리스트 저장 (장바구니에서 새 플레이리스트 생성)
+const handleSavePlaylist = async (title: string, content: string) => {
+  if (!user) return;
+  
+  try {
+    // title, content만 전달 (userNo 제외)
+    const createRes = await createPlaylist(title, content);
+    if (!createRes.success || !createRes.data) {
+      alert('플레이리스트 생성에 실패했습니다.');
+      return;
+    }
+    
+    const playlistNo = createRes.data.playlist_no;
+    
+    // 장바구니의 음악들을 플레이리스트에 추가
+    for (const music of cart) {
+      await addMusicToPlaylist(playlistNo, music.music_no);
+    }
+    
+    // 장바구니 비우기
+    setCart([]);
+    setIsCartOpen(false);
+    
+    // 플레이리스트 목록 새로고침
+    await fetchPlaylists(user.user_no);
+    
+    alert('플레이리스트가 저장되었습니다!');
+  } catch (error) {
+    console.error('플레이리스트 저장 실패:', error);
+    alert('플레이리스트 저장에 실패했습니다.');
+  }
+};
+
+  // 플레이리스트에서 음악 제거
+  const handleRemoveMusic = async (musicNo: number) => {
+    if (!selectedPlaylist) return;
+    try {
+      const res = await removeMusicFromPlaylist(selectedPlaylist.playlist_no, musicNo);
+      if (res.success && user) {
+        await fetchPlaylists(user.user_no);
+        // 현재 열린 플레이리스트 업데이트
+        const updated = playlists.find(p => p.playlist_no === selectedPlaylist.playlist_no);
+        if (updated) setSelectedPlaylist(updated);
+      }
+    } catch (error) {
+      console.error('음악 제거 실패:', error);
+    }
+  };
+
+  // 플레이리스트 삭제
+  const handleDeletePlaylist = async () => {
+    if (!selectedPlaylist) return;
+    const confirmed = window.confirm('정말로 이 플레이리스트를 삭제하시겠습니까?');
+    if (!confirmed) return;
+    
+    try {
+      const res = await deletePlaylist(selectedPlaylist.playlist_no);
+      if (res.success && user) {
+        await fetchPlaylists(user.user_no);
+        setIsDetailOpen(false);
+        setSelectedPlaylist(null);
+        alert('플레이리스트가 삭제되었습니다.');
+      }
+    } catch (error) {
+      console.error('플레이리스트 삭제 실패:', error);
+      alert('플레이리스트 삭제에 실패했습니다.');
+    }
+  };
+
   // 인증 확인 중 로딩 화면
   if (isAuthChecking) {
     return (
@@ -197,6 +264,7 @@ useEffect(() => {
       </div>
     );
   }
+
   const handleProfileUpdate = async (nickname: string) => {
     if (!user) return;
 
@@ -251,7 +319,6 @@ useEffect(() => {
                 created_at: new Date().toISOString()
               });
               setAuthView(null);
-              // 로그인 후 플레이리스트 목록 불러오기
               fetchPlaylists(userNo);
             }}
             onSwitchToRegister={() => setAuthView('register')}
@@ -316,7 +383,6 @@ useEffect(() => {
         </nav>
 
         <div className="p-4 border-t border-zinc-800 space-y-2">
-
           <button
             onClick={() => setIsCartOpen(true)}
             className="w-full flex items-center justify-between px-4 py-2 bg-primary/10 text-primary rounded-lg hover:bg-primary/20 transition-colors text-sm border border-primary/20"
@@ -594,8 +660,7 @@ useEffect(() => {
           }}
           onSave={async (title, content) => {
             if (isEditMode && selectedPlaylist) {
-              // 수정 모드
-              const res = await updatePlaylist(selectedPlaylist.playlist_no, title, content);
+              const res = await updatePlaylist(selectedPlaylist.playlist_no, title);
               if (res.success && user) {
                 await fetchPlaylists(user.user_no);
                 setIsCreateModalOpen(false);
@@ -603,7 +668,6 @@ useEffect(() => {
                 setIsDetailOpen(false);
               }
             } else {
-              // 생성 모드
               await handleSavePlaylist(title, content);
               setIsCreateModalOpen(false);
             }
