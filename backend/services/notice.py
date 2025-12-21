@@ -1,15 +1,15 @@
 from model import notice as notice_model
 
+# 공지사항 작성
 def create_notice(user_no, title, content):
-    """공지사항 작성"""
     try:
         notice_no = notice_model.insert_notice(user_no, title, content)
         return notice_no, None
     except Exception as e:
         return None, str(e)
 
+# 공지사항 수정
 def update_notice(notice_no, title, content):
-    """공지사항 수정"""
     try:
         success = notice_model.update_notice(notice_no, title, content)
         if success:
@@ -18,8 +18,8 @@ def update_notice(notice_no, title, content):
     except Exception as e:
         return False, str(e)
 
+# 공지사항 삭제
 def delete_notice(notice_no):
-    """공지사항 삭제"""
     try:
         success = notice_model.delete_notice(notice_no)
         if success:
@@ -28,8 +28,8 @@ def delete_notice(notice_no):
     except Exception as e:
         return False, str(e)
 
+# 공지사항 리스트 조회
 def get_notice_list():
-    """공지사항 리스트 조회"""
     try:
         notices = notice_model.list_all_with_user()
         for n in notices:
@@ -41,8 +41,8 @@ def get_notice_list():
     except Exception as e:
         return None, str(e)
 
+# 공지사항 상세 조회
 def get_notice_detail(notice_no):
-    """공지사항 상세 조회"""
     try:
         notice = notice_model.find_detail_with_user(notice_no)
         if not notice:
@@ -55,8 +55,8 @@ def get_notice_detail(notice_no):
     except Exception as e:
         return None, str(e)
 
+# notice_no로 공지사항 조회
 def find_notice_by_no(notice_no):
-    """notice_no로 공지사항 조회"""
     try:
         notice = notice_model.find_by_notice_no(notice_no)
         return notice, None
